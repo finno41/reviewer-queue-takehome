@@ -20,15 +20,15 @@ export default function App() {
     try {
       const reviewItems = await getReviewItems();
       setItems(reviewItems);
-      setSelectedId((currentSelectedId) => {
-        const candidateId = preferredId ?? currentSelectedId;
-        const nextSelectedId =
-          reviewItems.find((item) => item.id === candidateId)?.id ?? reviewItems[0]?.id ?? null;
+      const candidateId = preferredId ?? selectedId;
+      const nextSelectedId =
+        reviewItems.find((item) => item.id === candidateId)?.id ?? reviewItems[0]?.id ?? null;
 
-        return nextSelectedId;
-      });
+      setSelectedId(nextSelectedId);
+      return nextSelectedId;
     } catch {
       setListError("Could not load review items.");
+      return null;
     } finally {
       setListLoading(false);
     }
@@ -75,7 +75,18 @@ export default function App() {
       const updatedItem = await performReviewAction(selectedItem.id, action);
       const isStillActive = updatedItem.status === "unassigned" || updatedItem.status === "in_review";
 
-      await loadReviewQueue(isStillActive ? updatedItem.id : null);
+      if (isStillActive) {
+        setSelectedItem(updatedItem);
+      } else {
+        setSelectedItem(null);
+      }
+
+      const nextSelectedId = await loadReviewQueue(isStillActive ? updatedItem.id : null);
+
+      if (!isStillActive && nextSelectedId === null) {
+        setSelectedItem(null);
+      }
+
       setActionSuccess(`${updatedItem.title} was updated to ${updatedItem.status}.`);
     } catch (caughtError) {
       setActionError(

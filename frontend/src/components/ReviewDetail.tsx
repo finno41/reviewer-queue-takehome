@@ -27,6 +27,18 @@ function getAvailableActions(item: ReviewItem | null): ReviewAction[] {
   }
 
   if (item.status === "in_review") {
+    return [];
+  }
+
+  return [];
+}
+
+function getPlaceholderActions(item: ReviewItem | null): ReviewAction[] {
+  if (!item) {
+    return [];
+  }
+
+  if (item.status === "in_review") {
     return ["approve", "reject", "escalate"];
   }
 
@@ -56,6 +68,7 @@ export function ReviewDetail({
   onAction,
 }: ReviewDetailProps) {
   const availableActions = getAvailableActions(item);
+  const placeholderActions = getPlaceholderActions(item);
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5">
@@ -95,7 +108,20 @@ export function ReviewDetail({
               <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Actions</dt>
               <dd className="mt-2 flex flex-wrap gap-3">
                 {availableActions.length === 0 ? (
-                  <span className="text-sm text-slate-600">No actions available.</span>
+                  placeholderActions.length === 0 ? (
+                    <span className="text-sm text-slate-600">No actions available.</span>
+                  ) : (
+                    placeholderActions.map((action) => (
+                      <button
+                        key={action}
+                        type="button"
+                        disabled
+                        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-400"
+                      >
+                        {getActionLabel(action)}
+                      </button>
+                    ))
+                  )
                 ) : (
                   availableActions.map((action) => (
                     <button
