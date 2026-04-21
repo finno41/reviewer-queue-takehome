@@ -10,6 +10,8 @@ export type ReviewItem = {
   summary: string;
 };
 
+export type ReviewAction = "claim" | "approve" | "reject" | "escalate";
+
 export type ReviewItemsResponse = {
   items: ReviewItem[];
 };

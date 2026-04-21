@@ -1,9 +1,13 @@
-import type { ReviewItem } from "../types";
+import type { ReviewAction, ReviewItem } from "../types";
 
 type ReviewDetailProps = {
   item: ReviewItem | null;
   loading: boolean;
   error: string;
+  actionLoading: boolean;
+  actionError: string;
+  actionSuccess: string;
+  onAction: (action: ReviewAction) => void;
 };
 
 function formatSubmittedAt(value: string) {
@@ -13,7 +17,46 @@ function formatSubmittedAt(value: string) {
   });
 }
 
-export function ReviewDetail({ item, loading, error }: ReviewDetailProps) {
+function getAvailableActions(item: ReviewItem | null): ReviewAction[] {
+  if (!item) {
+    return [];
+  }
+
+  if (item.status === "unassigned") {
+    return ["claim"];
+  }
+
+  if (item.status === "in_review") {
+    return ["approve", "reject", "escalate"];
+  }
+
+  return [];
+}
+
+function getActionLabel(action: ReviewAction) {
+  switch (action) {
+    case "claim":
+      return "Claim";
+    case "approve":
+      return "Approve";
+    case "reject":
+      return "Reject";
+    case "escalate":
+      return "Escalate";
+  }
+}
+
+export function ReviewDetail({
+  item,
+  loading,
+  error,
+  actionLoading,
+  actionError,
+  actionSuccess,
+  onAction,
+}: ReviewDetailProps) {
+  const availableActions = getAvailableActions(item);
+
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5">
       <div className="border-b border-slate-200 pb-4">
@@ -24,6 +67,8 @@ export function ReviewDetail({ item, loading, error }: ReviewDetailProps) {
       {loading ? <p className="mt-4 text-sm text-slate-600">Loading selected review...</p> : null}
 
       {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
+      {actionError ? <p className="mt-4 text-sm text-red-600">{actionError}</p> : null}
+      {actionSuccess ? <p className="mt-4 text-sm text-emerald-700">{actionSuccess}</p> : null}
 
       {!loading && !error && !item ? (
         <p className="mt-4 text-sm text-slate-600">Choose a review item from the list to see its details.</p>
@@ -41,10 +86,31 @@ export function ReviewDetail({ item, loading, error }: ReviewDetailProps) {
             <dd className="mt-1 text-sm text-slate-900">{item.title}</dd>
           </div>
 
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Summary</dt>
-            <dd className="mt-1 text-sm leading-6 text-slate-900">{item.summary}</dd>
-          </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Summary</dt>
+              <dd className="mt-1 text-sm leading-6 text-slate-900">{item.summary}</dd>
+            </div>
+
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Actions</dt>
+              <dd className="mt-2 flex flex-wrap gap-3">
+                {availableActions.length === 0 ? (
+                  <span className="text-sm text-slate-600">No actions available.</span>
+                ) : (
+                  availableActions.map((action) => (
+                    <button
+                      key={action}
+                      type="button"
+                      onClick={() => onAction(action)}
+                      disabled={actionLoading}
+                      className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+                    >
+                      {actionLoading ? "Updating..." : getActionLabel(action)}
+                    </button>
+                  ))
+                )}
+              </dd>
+            </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>

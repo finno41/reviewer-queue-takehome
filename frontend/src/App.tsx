@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { getReviewItemById, getReviewItems } from "./api";
+import { getReviewItemById, getReviewItems, performReviewAction } from "./api";
 import { ReviewDetail } from "./components/ReviewDetail";
 import { ReviewList } from "./components/ReviewList";
-import type { ReviewItem } from "./types";
+import type { ReviewAction, ReviewItem } from "./types";
 
 export default function App() {
   const [items, setItems] = useState<ReviewItem[]>([]);
@@ -12,21 +12,30 @@ export default function App() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [listError, setListError] = useState("");
   const [detailError, setDetailError] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState("");
+  const [actionSuccess, setActionSuccess] = useState("");
+
+  async function loadReviewQueue(preferredId?: string | null) {
+    try {
+      const reviewItems = await getReviewItems();
+      setItems(reviewItems);
+      setSelectedId((currentSelectedId) => {
+        const candidateId = preferredId ?? currentSelectedId;
+        const nextSelectedId =
+          reviewItems.find((item) => item.id === candidateId)?.id ?? reviewItems[0]?.id ?? null;
+
+        return nextSelectedId;
+      });
+    } catch {
+      setListError("Could not load review items.");
+    } finally {
+      setListLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function loadReviewItems() {
-      try {
-        const reviewItems = await getReviewItems();
-        setItems(reviewItems);
-        setSelectedId(reviewItems[0]?.id ?? null);
-      } catch {
-        setListError("Could not load review items.");
-      } finally {
-        setListLoading(false);
-      }
-    }
-
-    void loadReviewItems();
+    void loadReviewQueue();
   }, []);
 
   useEffect(() => {
@@ -53,6 +62,30 @@ export default function App() {
     void loadSelectedItem();
   }, [selectedId]);
 
+  async function handleAction(action: ReviewAction) {
+    if (!selectedItem) {
+      return;
+    }
+
+    setActionLoading(true);
+    setActionError("");
+    setActionSuccess("");
+
+    try {
+      const updatedItem = await performReviewAction(selectedItem.id, action);
+      const isStillActive = updatedItem.status === "unassigned" || updatedItem.status === "in_review";
+
+      await loadReviewQueue(isStillActive ? updatedItem.id : null);
+      setActionSuccess(`${updatedItem.title} was updated to ${updatedItem.status}.`);
+    } catch (caughtError) {
+      setActionError(
+        caughtError instanceof Error ? caughtError.message : "Could not update the review item.",
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-slate-100 px-6 py-10 text-slate-900">
       <div className="mx-auto max-w-5xl">
@@ -68,7 +101,15 @@ export default function App() {
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
           <ReviewList items={items} selectedId={selectedId} onSelect={setSelectedId} />
-          <ReviewDetail item={selectedItem} loading={detailLoading} error={detailError} />
+          <ReviewDetail
+            item={selectedItem}
+            loading={detailLoading}
+            error={detailError}
+            actionLoading={actionLoading}
+            actionError={actionError}
+            actionSuccess={actionSuccess}
+            onAction={handleAction}
+          />
         </div>
       </div>
     </main>
