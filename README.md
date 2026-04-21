@@ -15,6 +15,7 @@ Terminal 1:
 cd "/Users/oliverfinn/code/finno41/job challenges/reviewer-queue-takehome"
 nvm use
 cd backend
+npm run db:reset
 npm run dev
 ```
 
