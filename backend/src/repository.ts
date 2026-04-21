@@ -26,3 +26,29 @@ export function listReviewItems() {
 
   return rows;
 }
+
+export function getReviewItemById(id: string) {
+  const database = getDatabase();
+  database.exec(createReviewItemsTableSql);
+
+  const row = database
+    .prepare(`
+      SELECT
+        id,
+        title,
+        submitted_at,
+        risk_level,
+        customer_tier,
+        status,
+        assigned_reviewer,
+        notes_count,
+        summary
+      FROM review_items
+      WHERE id = ?
+    `)
+    .get(id) as ReviewItem | undefined;
+
+  database.close();
+
+  return row ?? null;
+}

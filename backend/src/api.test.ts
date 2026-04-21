@@ -39,3 +39,67 @@ test("GET /api/review-items returns seeded review items", async () => {
     });
   }
 });
+
+test("GET /api/review-items/:id returns the matching review item", async () => {
+  resetAndSeedDatabase();
+
+  const server = app.listen(0);
+
+  try {
+    const address = server.address();
+
+    if (!address || typeof address === "string") {
+      throw new Error("Test server did not provide a port.");
+    }
+
+    const expectedItem = seedReviewItems.find((item) => item.id === "RV-1030");
+
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/review-items/RV-1030`);
+    const body = (await response.json()) as { item: typeof seedReviewItems[number] };
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(body.item, expectedItem);
+  } finally {
+    await new Promise<void>((resolve, reject) => {
+      server.close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve();
+      });
+    });
+  }
+});
+
+test("GET /api/review-items/:id returns 404 for an unknown review item", async () => {
+  resetAndSeedDatabase();
+
+  const server = app.listen(0);
+
+  try {
+    const address = server.address();
+
+    if (!address || typeof address === "string") {
+      throw new Error("Test server did not provide a port.");
+    }
+
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/review-items/UNKNOWN-ID`);
+    const body = (await response.json()) as { error: string };
+
+    assert.equal(response.status, 404);
+    assert.equal(body.error, "Review item not found");
+  } finally {
+    await new Promise<void>((resolve, reject) => {
+      server.close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve();
+      });
+    });
+  }
+});
