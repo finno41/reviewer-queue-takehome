@@ -21,7 +21,7 @@ test("GET /api/review-items returns seeded review items", async () => {
     const knownSeededItem = seedReviewItems.find((item) => item.id === "RV-1024");
 
     assert.equal(response.status, 200);
-    assert.equal(body.items.length, seedReviewItems.length);
+    assert.ok(body.items.length < seedReviewItems.length);
     assert.deepEqual(
       body.items.find((item) => item.id === "RV-1024"),
       knownSeededItem,
@@ -40,7 +40,7 @@ test("GET /api/review-items returns seeded review items", async () => {
   }
 });
 
-test("GET /api/review-items returns priority customer items before standard items", async () => {
+test("GET /api/review-items excludes terminal review items", async () => {
   resetAndSeedDatabase();
 
   const server = app.listen(0);
@@ -56,14 +56,44 @@ test("GET /api/review-items returns priority customer items before standard item
     const body = (await response.json()) as { items: typeof seedReviewItems };
 
     assert.equal(response.status, 200);
+    assert.ok(body.items.every((item) => item.status === "unassigned" || item.status === "in_review"));
+    assert.equal(body.items.some((item) => item.status === "approved"), false);
+    assert.equal(body.items.some((item) => item.status === "rejected"), false);
+    assert.equal(body.items.some((item) => item.status === "escalated"), false);
+  } finally {
+    await new Promise<void>((resolve, reject) => {
+      server.close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
 
-    const customerTiers = body.items.map((item) => item.customer_tier);
-    const firstStandardIndex = customerTiers.indexOf("standard");
-    const lastPriorityIndex = customerTiers.lastIndexOf("priority");
+        resolve();
+      });
+    });
+  }
+});
 
-    assert.notEqual(firstStandardIndex, -1);
-    assert.notEqual(lastPriorityIndex, -1);
-    assert.ok(lastPriorityIndex < firstStandardIndex);
+test("GET /api/review-items returns the active queue in urgency order", async () => {
+  resetAndSeedDatabase();
+
+  const server = app.listen(0);
+
+  try {
+    const address = server.address();
+
+    if (!address || typeof address === "string") {
+      throw new Error("Test server did not provide a port.");
+    }
+
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/review-items`);
+    const body = (await response.json()) as { items: typeof seedReviewItems };
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(
+      body.items.map((item) => item.id),
+      ["RV-1024", "RV-1030", "RV-1025", "RV-1032", "RV-1035", "RV-1026", "RV-1028", "RV-1027", "RV-1031"],
+    );
   } finally {
     await new Promise<void>((resolve, reject) => {
       server.close((error) => {

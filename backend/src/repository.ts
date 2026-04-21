@@ -18,7 +18,13 @@ export function listReviewItems() {
         notes_count,
         summary
       FROM review_items
+      WHERE status IN ('unassigned', 'in_review')
       ORDER BY
+        CASE risk_level
+          WHEN 'high' THEN 0
+          WHEN 'medium' THEN 1
+          ELSE 2
+        END,
         CASE customer_tier
           WHEN 'priority' THEN 0
           ELSE 1
