@@ -1,4 +1,4 @@
-# Empty Full-Stack Scaffold
+# Reviewer queue takehome
 
 This project is intentionally stripped back to the minimum:
 
