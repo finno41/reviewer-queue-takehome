@@ -12,7 +12,7 @@ This project is intentionally stripped back to the minimum:
 Terminal 1:
 
 ```bash
-cd "/Users/oliverfinn/code/finno41/job challenges/reviewer-queue-takehome"
+cd "{INSERT_YOUR_DIRECTORY}/reviewer-queue-takehome"
 nvm use
 cd backend
 npm run db:reset
@@ -22,7 +22,7 @@ npm run dev
 Terminal 2:
 
 ```bash
-cd "/Users/oliverfinn/code/finno41/job challenges/reviewer-queue-takehome"
+cd "{INSERT_YOUR_DIRECTORY}/reviewer-queue-takehome"
 nvm use
 cd frontend
 npm run dev
