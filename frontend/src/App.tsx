@@ -1,7 +1,76 @@
+import { useEffect, useState } from "react";
+import { getReviewItemById, getReviewItems } from "./api";
+import { ReviewDetail } from "./components/ReviewDetail";
+import { ReviewList } from "./components/ReviewList";
+import type { ReviewItem } from "./types";
+
 export default function App() {
+  const [items, setItems] = useState<ReviewItem[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<ReviewItem | null>(null);
+  const [listLoading, setListLoading] = useState(true);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [listError, setListError] = useState("");
+  const [detailError, setDetailError] = useState("");
+
+  useEffect(() => {
+    async function loadReviewItems() {
+      try {
+        const reviewItems = await getReviewItems();
+        setItems(reviewItems);
+        setSelectedId(reviewItems[0]?.id ?? null);
+      } catch {
+        setListError("Could not load review items.");
+      } finally {
+        setListLoading(false);
+      }
+    }
+
+    void loadReviewItems();
+  }, []);
+
+  useEffect(() => {
+    async function loadSelectedItem() {
+      if (!selectedId) {
+        setSelectedItem(null);
+        return;
+      }
+
+      setDetailLoading(true);
+      setDetailError("");
+
+      try {
+        const reviewItem = await getReviewItemById(selectedId);
+        setSelectedItem(reviewItem);
+      } catch {
+        setDetailError("Could not load the selected review item.");
+        setSelectedItem(null);
+      } finally {
+        setDetailLoading(false);
+      }
+    }
+
+    void loadSelectedItem();
+  }, [selectedId]);
+
   return (
-    <main className="flex min-h-screen items-center justify-center bg-white px-6 text-slate-900">
-      <h1 className="text-2xl font-medium">Hello world</h1>
+    <main className="min-h-screen bg-slate-100 px-6 py-10 text-slate-900">
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-semibold text-slate-900">Reviewer workspace</h1>
+          <p className="mt-2 text-sm text-slate-600">
+            A simple React and Tailwind view of the queue and selected review item.
+          </p>
+        </div>
+
+        {listLoading ? <p className="mb-6 text-sm text-slate-600">Loading review queue...</p> : null}
+        {listError ? <p className="mb-6 text-sm text-red-600">{listError}</p> : null}
+
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+          <ReviewList items={items} selectedId={selectedId} onSelect={setSelectedId} />
+          <ReviewDetail item={selectedItem} loading={detailLoading} error={detailError} />
+        </div>
+      </div>
     </main>
   );
 }
