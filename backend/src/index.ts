@@ -1,7 +1,8 @@
 import cors from "cors";
 import express from "express";
+import { listReviewItems } from "./seed/database";
 
-const app = express();
+export const app = express();
 const port = 3001;
 
 app.use(
@@ -14,6 +15,12 @@ app.get("/api/hello", (_request, response) => {
   response.json({ message: "Hello world" });
 });
 
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+app.get("/api/review-items", (_request, response) => {
+  response.json({ items: listReviewItems() });
 });
+
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}`);
+  });
+}

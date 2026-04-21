@@ -5,6 +5,19 @@ import { seedReviewItems, type ReviewItem } from "./seedData";
 
 const dataDirectory = path.resolve(process.cwd(), "data");
 const databasePath = path.join(dataDirectory, "reviewer-queue.db");
+const createReviewItemsTableSql = `
+  CREATE TABLE IF NOT EXISTS review_items (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    submitted_at TEXT NOT NULL,
+    risk_level TEXT NOT NULL CHECK (risk_level IN ('low', 'medium', 'high')),
+    customer_tier TEXT NOT NULL CHECK (customer_tier IN ('standard', 'priority')),
+    status TEXT NOT NULL CHECK (status IN ('unassigned', 'in_review', 'approved', 'rejected', 'escalated')),
+    assigned_reviewer TEXT,
+    notes_count INTEGER NOT NULL,
+    summary TEXT NOT NULL
+  )
+`;
 
 function getDatabase() {
   fs.mkdirSync(dataDirectory, { recursive: true });
@@ -14,19 +27,7 @@ function getDatabase() {
 export function resetAndSeedDatabase(items: ReviewItem[] = seedReviewItems) {
   const database = getDatabase();
 
-  database.exec(`
-    CREATE TABLE IF NOT EXISTS review_items (
-      id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
-      submitted_at TEXT NOT NULL,
-      risk_level TEXT NOT NULL CHECK (risk_level IN ('low', 'medium', 'high')),
-      customer_tier TEXT NOT NULL CHECK (customer_tier IN ('standard', 'priority')),
-      status TEXT NOT NULL CHECK (status IN ('unassigned', 'in_review', 'approved', 'rejected', 'escalated')),
-      assigned_reviewer TEXT,
-      notes_count INTEGER NOT NULL,
-      summary TEXT NOT NULL
-    )
-  `);
+  database.exec(createReviewItemsTableSql);
 
   database.exec("DELETE FROM review_items");
 
@@ -61,6 +62,32 @@ export function resetAndSeedDatabase(items: ReviewItem[] = seedReviewItems) {
   database.close();
 
   return items.length;
+}
+
+export function listReviewItems() {
+  const database = getDatabase();
+  database.exec(createReviewItemsTableSql);
+
+  const rows = database
+    .prepare(`
+      SELECT
+        id,
+        title,
+        submitted_at,
+        risk_level,
+        customer_tier,
+        status,
+        assigned_reviewer,
+        notes_count,
+        summary
+      FROM review_items
+      ORDER BY submitted_at ASC
+    `)
+    .all() as ReviewItem[];
+
+  database.close();
+
+  return rows;
 }
 
 export function getDatabasePath() {
