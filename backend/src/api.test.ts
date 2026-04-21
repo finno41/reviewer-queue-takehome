@@ -40,6 +40,44 @@ test("GET /api/review-items returns seeded review items", async () => {
   }
 });
 
+test("GET /api/review-items returns priority customer items before standard items", async () => {
+  resetAndSeedDatabase();
+
+  const server = app.listen(0);
+
+  try {
+    const address = server.address();
+
+    if (!address || typeof address === "string") {
+      throw new Error("Test server did not provide a port.");
+    }
+
+    const response = await fetch(`http://127.0.0.1:${address.port}/api/review-items`);
+    const body = (await response.json()) as { items: typeof seedReviewItems };
+
+    assert.equal(response.status, 200);
+
+    const customerTiers = body.items.map((item) => item.customer_tier);
+    const firstStandardIndex = customerTiers.indexOf("standard");
+    const lastPriorityIndex = customerTiers.lastIndexOf("priority");
+
+    assert.notEqual(firstStandardIndex, -1);
+    assert.notEqual(lastPriorityIndex, -1);
+    assert.ok(lastPriorityIndex < firstStandardIndex);
+  } finally {
+    await new Promise<void>((resolve, reject) => {
+      server.close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve();
+      });
+    });
+  }
+});
+
 test("GET /api/review-items/:id returns the matching review item", async () => {
   resetAndSeedDatabase();
 

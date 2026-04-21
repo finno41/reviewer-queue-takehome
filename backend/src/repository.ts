@@ -18,7 +18,12 @@ export function listReviewItems() {
         notes_count,
         summary
       FROM review_items
-      ORDER BY submitted_at ASC
+      ORDER BY
+        CASE customer_tier
+          WHEN 'priority' THEN 0
+          ELSE 1
+        END,
+        submitted_at ASC
     `)
     .all() as ReviewItem[];
 
