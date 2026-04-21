@@ -4,8 +4,7 @@ This project is intentionally stripped back to the minimum:
 
 - a Vite + React frontend
 - an Express backend
-- a single frontend page that shows `Hello world`
-- a single backend route at `GET /api/hello`
+- a single frontend page that shows reviews
 
 ## Run
 
