@@ -1,6 +1,6 @@
 import cors from "cors";
 import express from "express";
-import { listReviewItems } from "./database";
+import { api } from "./api";
 
 export const app = express();
 const port = 3001;
@@ -11,13 +11,7 @@ app.use(
   }),
 );
 
-app.get("/api/hello", (_request, response) => {
-  response.json({ message: "Hello world" });
-});
-
-app.get("/api/review-items", (_request, response) => {
-  response.json({ items: listReviewItems() });
-});
+app.use("/api", api);
 
 if (require.main === module) {
   app.listen(port, () => {

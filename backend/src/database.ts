@@ -5,7 +5,7 @@ import { seedReviewItems, type ReviewItem } from "./seed/seedData";
 
 const dataDirectory = path.resolve(process.cwd(), "data");
 const databasePath = path.join(dataDirectory, "reviewer-queue.db");
-const createReviewItemsTableSql = `
+export const createReviewItemsTableSql = `
   CREATE TABLE IF NOT EXISTS review_items (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
@@ -19,7 +19,7 @@ const createReviewItemsTableSql = `
   )
 `;
 
-function getDatabase() {
+export function getDatabase() {
   fs.mkdirSync(dataDirectory, { recursive: true });
   return new DatabaseSync(databasePath);
 }
@@ -62,32 +62,6 @@ export function resetAndSeedDatabase(items: ReviewItem[] = seedReviewItems) {
   database.close();
 
   return items.length;
-}
-
-export function listReviewItems() {
-  const database = getDatabase();
-  database.exec(createReviewItemsTableSql);
-
-  const rows = database
-    .prepare(`
-      SELECT
-        id,
-        title,
-        submitted_at,
-        risk_level,
-        customer_tier,
-        status,
-        assigned_reviewer,
-        notes_count,
-        summary
-      FROM review_items
-      ORDER BY submitted_at ASC
-    `)
-    .all() as ReviewItem[];
-
-  database.close();
-
-  return rows;
 }
 
 export function getDatabasePath() {
