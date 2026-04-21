@@ -1,6 +1,6 @@
 import cors from "cors";
 import express from "express";
-import { listReviewItems } from "./seed/database";
+import { listReviewItems } from "./database";
 
 export const app = express();
 const port = 3001;

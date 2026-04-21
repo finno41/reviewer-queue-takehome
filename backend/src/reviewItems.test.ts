@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { app } from "./index";
-import { resetAndSeedDatabase } from "./seed/database";
+import { resetAndSeedDatabase } from "./database";
 import { seedReviewItems } from "./seed/seedData";
 
 test("GET /api/review-items returns seeded review items", async () => {

@@ -1,4 +1,4 @@
-import { getDatabasePath, resetAndSeedDatabase } from "./database";
+import { getDatabasePath, resetAndSeedDatabase } from "../database";
 
 const insertedCount = resetAndSeedDatabase();
 

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { seedReviewItems, type ReviewItem } from "./seedData";
+import { seedReviewItems, type ReviewItem } from "./seed/seedData";
 
 const dataDirectory = path.resolve(process.cwd(), "data");
 const databasePath = path.join(dataDirectory, "reviewer-queue.db");
